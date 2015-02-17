@@ -5,15 +5,21 @@
  */
 package mousepointer;
 
+import java.awt.Dimension;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Robot;
+import java.awt.Toolkit;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -26,6 +32,12 @@ public class SocketServer {
      */
     public static void main(String[] args) {
         System.out.println("Servidor.");
+
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        double width = screenSize.getWidth();
+        double height = screenSize.getHeight();
+        System.out.println(width + " x " + height);
+
         int x, y;
         try {
             Robot robot = new Robot();
@@ -45,8 +57,7 @@ public class SocketServer {
             String inputLine;
             String[] cachos = new String[2];
 
-            Double inclinacionX, inclinacionY;
-            int newX, newY, sentidoX, sentidoY;
+            int newX, newY, steep = 1;
 
             //Esperando conección
             while ((inputLine = in.readLine()) != null) {
@@ -58,43 +69,35 @@ public class SocketServer {
 
                 cachos = inputLine.split(",");
 
-                if(Double.parseDouble(cachos[0])>0){
-                    sentidoX=1;
-                }else{
-                    sentidoX=-1;
-                }
+                newX = (int) ((width / 2) - Integer.parseInt(cachos[0]));
+                newY = (int) ((height / 2) - Integer.parseInt(cachos[1]));
+                System.out.println("Go to " + newX + ", " + newY);
+                robot.mouseMove(newX, newY);
 
-                if(Double.parseDouble(cachos[1])>0){
-                    sentidoY=1;
-                }else{
-                    sentidoY=-1;
-                }
-                
-                inclinacionX = Math.pow(Double.parseDouble(cachos[0])*2, 2)*sentidoX;
-                inclinacionY = Math.pow(Double.parseDouble(cachos[1])*2, 2)*sentidoY;
-
-                newX = x - inclinacionX.intValue();
-                newY = y - inclinacionY.intValue();
-
+//                double distancia = Math.ceil(Math.abs(newX - x) + Math.abs(newY - y));
+//                steep = (int) (distancia / 100);
                 while (newX != x || newY != y) {
+                    if (steep > 1) {
+                        steep = (int) Math.ceil(steep / 2);
+                    }
                     if (newX > x) {
-                        x++;
+                        x += steep;
                     } else if (newX < x) {
-                        x--;
+                        x -= steep;
                     }
                     if (newY > y) {
-                        y++;
+                        y += steep;
                     } else if (newY < y) {
-                        y--;
+                        y -= steep;
                     }
                     robot.mouseMove(x, y);
                     Thread.sleep(1);
                 }
-
-                out.println("ok," + inputLine);
                 if (inputLine.equals("Bye.")) {
+//                    out.println("Bye.");
                     break;
                 }
+                out.println("ok," + inputLine);
             }
             out.close();
             in.close();
