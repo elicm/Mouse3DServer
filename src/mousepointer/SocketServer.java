@@ -38,9 +38,8 @@ public class SocketServer {
         double height = screenSize.getHeight();
         System.out.println(width + " x " + height);
 
-        int x, y;
         try {
-            Robot robot = new Robot();
+
             int portNumber = 8000;
             ServerSocket serverSocket = new ServerSocket(portNumber);
             System.out.println("Esperando Conección");
@@ -51,53 +50,37 @@ public class SocketServer {
                     new InputStreamReader(clientSocket.getInputStream())
             );
 
-            System.out.println("Enviando saludo");
-            out.println("Hi");
+            System.out.println("Enviando resolución");
+            out.println(width + "," + height);
+            out.flush();
 
             String inputLine;
             String[] cachos = new String[2];
 
-            int newX, newY, steep = 1;
+            int newX, newY;
+            Raton raton = new Raton();
+            Thread thread = new Thread(raton);
+            thread.start();
 
             //Esperando conección
             while ((inputLine = in.readLine()) != null) {
-                System.out.println("Cliente dice: " + inputLine);
-
-                Point location = MouseInfo.getPointerInfo().getLocation();
-                x = location.x;
-                y = location.y;
+//                System.out.println("Cliente dice: " + inputLine);
 
                 cachos = inputLine.split(",");
 
-                newX = (int) ((width / 2) - Integer.parseInt(cachos[0]));
-                newY = (int) ((height / 2) - Integer.parseInt(cachos[1]));
-                System.out.println("Go to " + newX + ", " + newY);
-                robot.mouseMove(newX, newY);
+                newX = Integer.parseInt(cachos[0]);
+                newY = Integer.parseInt(cachos[1]);
+                System.out.println("\nGo to " + newX + ", " + newY);
+                raton.newX = newX;
+                raton.newY = newY;
 
-//                double distancia = Math.ceil(Math.abs(newX - x) + Math.abs(newY - y));
-//                steep = (int) (distancia / 100);
-                while (newX != x || newY != y) {
-                    if (steep > 1) {
-                        steep = (int) Math.ceil(steep / 2);
-                    }
-                    if (newX > x) {
-                        x += steep;
-                    } else if (newX < x) {
-                        x -= steep;
-                    }
-                    if (newY > y) {
-                        y += steep;
-                    } else if (newY < y) {
-                        y -= steep;
-                    }
-                    robot.mouseMove(x, y);
-                    Thread.sleep(1);
-                }
                 if (inputLine.equals("Bye.")) {
 //                    out.println("Bye.");
+                    raton.alive = false;
                     break;
                 }
                 out.println("ok," + inputLine);
+                out.flush();
             }
             out.close();
             in.close();
